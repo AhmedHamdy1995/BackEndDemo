@@ -7,11 +7,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -79,11 +81,11 @@ namespace TPBack
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             })
-              .AddJwtBearer(o =>
+              .AddJwtBearer(op =>
               {
-                  o.RequireHttpsMetadata = false;
-                  o.SaveToken = false;
-                  o.TokenValidationParameters = new TokenValidationParameters
+                  op.RequireHttpsMetadata = false;
+                  op.SaveToken = false;
+                  op.TokenValidationParameters = new TokenValidationParameters
                   {
                       ValidateIssuerSigningKey = true,
                       ValidateIssuer = true,
@@ -95,7 +97,17 @@ namespace TPBack
                   };
               });
 
-
+            // to all accessing data for outside origin (vue js)
+            services.AddCors(options =>
+            {
+                options.AddPolicy("foo",
+                builder =>
+                {
+                    // Not a permanent solution, but just trying to isolate the problem
+                   builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+                    
+                });
+            });
 
         }
 
@@ -114,6 +126,9 @@ namespace TPBack
                 option.RoutePrefix="";
             });
 
+            // Use the CORS policy
+            app.UseCors("foo");
+
             app.UseRouting();
 
             app.UseAuthentication();
@@ -123,6 +138,13 @@ namespace TPBack
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+            });
+
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(
+                    Path.Combine(Directory.GetCurrentDirectory(), "Photos")),
+                RequestPath = "/Photos"
             });
         }
     }

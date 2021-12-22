@@ -18,8 +18,8 @@ namespace TPBack.Repository
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
-
         private readonly JWT _jwt;
+
         public AuthServices(UserManager<ApplicationUser> _userManager, RoleManager<IdentityRole> _roleManager, IOptions<JWT> _jwt)
         {
             this._userManager = _userManager;
